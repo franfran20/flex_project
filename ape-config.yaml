@@ -1,0 +1,7 @@
+name: flex
+
+geth:
+  fantom:
+    default_network: "testnet"
+    testnet:
+      uri: "https://rpc.ankr.com/fantom_testnet"
