@@ -103,7 +103,7 @@ The principal type refers to the type of asset the lender is willing to lend.
 This is basically a scenario of how flex works. You can try this out on the live demo.
 
 - Starting Price Point `FTM:1 USD` and `FLEX:1.5USD`
-- Francis Has some FTM he wishes to borrower and earn interest from. So he goes to flex to find a lender that fits the amount of interest he's willing to receive and collateral type he'll receive incase of a liquidation.
+- Francis Has some FTM he wishes to borrower and earn interest from. So he goes to flex to find a borrower that fits the amount of interest he's willing to receive and collateral type he'll receive incase of a liquidation.
 - Francis proposes a lender loan with the following details `collateral rati:150%`, `margin cutoff:120%`, `interesrt: 5%` and he's willing to borrow `20 FTM` and collect a collateral of `Flex` tokens.
 - Jane has some flex tokens and has seen Francis loan on flex and likes the idea of the loan but feels the collateral ratio is too high so she pushes a renegotiation to reduce the collateral ratio to `140%`
 - Francis sees this and after a few conversations with Jane on flex he agrees to her renegotiation and accepts it.
