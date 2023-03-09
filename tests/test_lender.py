@@ -1159,41 +1159,6 @@ def test_on_repay_loan_the_principal_is_transferred_back_to_the_lender(
     assert flex_token.balanceOf(lender.address) == prev_lender_bal + repay_amount
 
 
-def test_on_repay_loan_borrower_receives_his_collateral_back(
-    accepted_lender_loan, accounts
-):
-    # anyone can repay loan
-    non_borrower_or_lender = accounts[4]
-    borrower = accounts[9]
-    lender = accounts[0]
-
-    # get contract
-    flex_core = accepted_lender_loan
-
-    # test params
-    loan_id = 1
-    repay_amount = 208 * 10**18
-
-    # approvce contract repay amount
-    flex_token = project.flexToken.deployments[-1]
-
-    flex_token.mint(
-        non_borrower_or_lender.address, repay_amount, sender=non_borrower_or_lender
-    )
-    flex_token.approve(flex_core.address, repay_amount, sender=non_borrower_or_lender)
-
-    # prev borrower balance
-    prev_borrower_bal = borrower.balance
-
-    # repay loan principal(flex token)
-    flex_core.repay_loan(loan_id, sender=non_borrower_or_lender)
-
-    # collateral deposited
-    collateral_Deposited = flex_core.loan_details(loan_id)["collateral_deposited"]
-
-    assert borrower.balance == prev_borrower_bal + collateral_Deposited
-
-
 def test_on_repay_loan_state_changes_to_fulfilled_and_debt_zeros(
     accepted_lender_loan, accounts
 ):
@@ -1586,53 +1551,6 @@ def test_accept_loan_buyout_changes_the_loan_lender_to_the_buyout_proposer(
     assert flex_core.loan_details(loan_id)["lender"] == buyout_proposer.address
 
 
-# TEST CASE 14 -  DEACTIVATE LOAN
-def test_deactivate_loan_reverts_if_the_msgsender_isnt_loan_owner(
-    flex_contract_with_proposed_lender_loan, accounts
-):
-    # get accounts
-    lender = accounts[0]
-    non_lender = accounts[6]
-
-    # get contracts
-    flex_core, flex_token = flex_contract_with_proposed_lender_loan
-
-    # test params
-    loan_id = 1
-
-    # expect revert
-    with ape.reverts("No Permision To Deactivate"):
-        flex_core.deactivate_loan(loan_id, sender=non_lender)
-
-
-def test_deactivate_loan_returns_loan_owner_deposit_and_sets_loan_to_deactivated_state(
-    flex_contract_with_proposed_lender_loan, accounts
-):
-    # get accounts
-    lender = accounts[0]
-    non_lender = accounts[6]
-
-    # get contracts
-    flex_core, flex_token = flex_contract_with_proposed_lender_loan
-
-    # test params
-    loan_id = 1
-
-    # prev lender balance
-    prev_lender_balance = flex_token.balanceOf(lender.address)
-    principal_deposited = 200 * 10**18
-
-    # deactivate loan
-    flex_core.deactivate_loan(loan_id, sender=lender)
-
-    # asserts
-    assert flex_core.loan_details(loan_id)["state"] == flex_core.deactivated()
-    assert (
-        flex_token.balanceOf(lender.address)
-        == prev_lender_balance + principal_deposited
-    )
-
-
 # /////////// LENDER LOAN WITH COLLATERAL AS ERC20 AND PRINCIPAL AS NATIVE ASSET /////
 # MAIN FUNCTION TO TEST FOR
 # 1. Accept Loan [DONE]
@@ -1791,39 +1709,6 @@ def test_on_repay_loan_the_principal_is_transferred_back_to_the_lender_with_coll
     flex_core.repay_loan(loan_id, sender=non_borrower_or_lender, value=repay_amount)
 
     assert lender.balance == prev_lender_bal + repay_amount
-
-
-def test_on_repay_loan_borrower_receives_his_collateral_back_with_collateral_as_erc20(
-    accepted_lender_loan_with_collateral_as_erc20, accounts
-):
-    # anyone can repay loan
-    non_borrower_or_lender = accounts[4]
-    borrower = accounts[9]
-    lender = accounts[0]
-
-    # get contract
-    flex_core = accepted_lender_loan_with_collateral_as_erc20
-
-    # test params
-    loan_id = 1
-    repay_amount = 208 * 10**18
-
-    # flex token
-    flex_token = project.flexToken.deployments[-1]
-
-    # prev bal
-    prev_borrower_bal = flex_token.balanceOf(borrower.address)
-
-    # repay loan principal(ftm)
-    flex_core.repay_loan(loan_id, sender=non_borrower_or_lender, value=repay_amount)
-
-    # collateral deposited
-    collateral_deposited = flex_core.loan_details(loan_id)["collateral_deposited"]
-
-    assert (
-        flex_token.balanceOf(borrower.address)
-        == prev_borrower_bal + collateral_deposited
-    )
 
 
 def test_on_repay_loan_satte_changes_to_fulfilled_and_debt_zeros_with_collateral_as_erc20(

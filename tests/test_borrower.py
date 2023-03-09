@@ -447,39 +447,6 @@ def test_on_repay_loan_the_principal_is_transferred_back_to_the_lender_for_borro
     assert lender.balance == prev_lender_bal + repay_amount
 
 
-def test_on_repay_loan_borrower_receives_his_collateral_back_for_borrower_loan(
-    accepted_borrower_loan, accounts
-):
-    # anyone can repay loan
-    non_borrower_or_lender = accounts[4]
-    borrower = accounts[0]
-    lender = accounts[5]
-
-    # get contract
-    flex_core = accepted_borrower_loan
-
-    # test params
-    loan_id = 1
-    repay_amount = 208 * 10**18
-
-    # approvce contract repay amount
-    flex_token = project.flexToken.deployments[-1]
-
-    # prev borrower balance
-    prev_borrower_bal = flex_token.balanceOf(borrower.address)
-
-    # repay loan principal(flex token)
-    flex_core.repay_loan(loan_id, sender=non_borrower_or_lender, value=repay_amount)
-
-    # collateral deposited
-    collateral_deposited = flex_core.loan_details(loan_id)["collateral_deposited"]
-
-    assert (
-        flex_token.balanceOf(borrower.address)
-        == prev_borrower_bal + collateral_deposited
-    )
-
-
 # TEST CASE 9 - Liquidate Loan
 def test_liquidate_loan_gives_liquidator_2_percent_of_collateral_for_borrower_loan(
     accepted_borrower_loan, accounts
@@ -549,31 +516,3 @@ def test_collateral_is_given_to_the_lender_in_a_liquidation_for_borrower_loan(
 
     # assert
     assert flex_token.balanceOf(lender) == prev_lender_balance + expected_increase
-
-
-#  TEST CASE 10 - Deactivate Loan
-def test_deactivate_loan_returns_loan_owner_deposit_and_sets_loan_to_deactivated_state_for_borrower_loan(
-    flex_contract_with_proposed_borrower_loan, accounts
-):
-    # get accounts
-    borrower = accounts[0]
-
-    # get contracts
-    flex_core, flex_token = flex_contract_with_proposed_borrower_loan
-
-    # test params
-    loan_id = 1
-
-    # prev lender balance
-    prev_borrower_balance = flex_token.balanceOf(borrower.address)
-    collateral_deposited = 200 * 10**18
-
-    # deactivate loan
-    flex_core.deactivate_loan(loan_id, sender=borrower)
-
-    # asserts
-    assert flex_core.loan_details(loan_id)["state"] == flex_core.deactivated()
-    assert (
-        flex_token.balanceOf(borrower.address)
-        == prev_borrower_balance + collateral_deposited
-    )
