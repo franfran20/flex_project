@@ -98,6 +98,24 @@ There are currently only four major types of assets
 The collateral type refers to the type of asset the borrower wishes to pledge as collateral.
 The principal type refers to the type of asset the lender is willing to lend.
 
+## **A FLEX TALE**
+
+This is basically a scenario of how flex works. You can try this out on the live demo.
+
+- Starting Price Point `FTM:1 USD` and `FLEX:1.5USD`
+- Francis Has some FTM he wishes to borrower and earn interest from. So he goes to flex to find a lender that fits the amount of interest he's willing to receive and collateral type he'll receive incase of a liquidation.
+- Francis proposes a lender loan with the following details `collateral rati:150%`, `margin cutoff:120%`, `interesrt: 5%` and he's willing to borrow `20 FTM` and collect a collateral of `Flex` tokens.
+- Jane has some flex tokens and has seen Francis loan on flex and likes the idea of the loan but feels the collateral ratio is too high so she pushes a renegotiation to reduce the collateral ratio to `140%`
+- Francis sees this and after a few conversations with Jane on flex he agrees to her renegotiation and accepts it.
+- Jane then accepts this loan by paying a collateral worth more than `140%` of her debt to the loan which is `29.4 Flex` tokens.
+- Janes debt automatically increases to the borrow amount plus interest which is `21 FTM`
+- Now if all goes well and Jane comes back she reapys her `21 FTM` loan debt to Francis and takes back her collateral.
+- If all doesnt go as planned and for some reason Jane isnt monitoring her collateral and the price of her collateral being `Flex` drops to `0.8 Usd`. You can do the math..
+- She has a collateral deposit of `29.4 flex` tokens which are now worth `23.52 usd` comapred to her debt of `ftm` which is worth `21 usd` without the margin cutoff but if we include the margin cutoff which we should her liquidation point is `25.2usd`
+- since the `23.52 usd` collateral is now less than her `25.2 usd `deposit she canbe liquidated
+- On a normal level anyone is allowed to liquidate a loan, so as soon as the price drops below the margin cutoff a liquidator would liquidate the loan and get the liquidation percentage releasing the collateral to the lender.
+- If there was a time limit on this loan and it was exceeded before the price dropped the loan would also be valid for liquidation.
+
 ## **Technologies Used!**
 
 ### **Fantom**
