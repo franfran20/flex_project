@@ -17,18 +17,18 @@ interface flexCalc:
 struct Loan:
     borrower: address 
     lender: address 
-    margin_cutoff: uint256 # the liquidation threshold percentage
-    collateral_ratio: uint256 # the percentage amount of money the borrower can take based on his collateral to always keep him afloat
-    fixed_interest_rate: uint256 # interest on loan repay
-    borrow_amount: uint256 # max amount lender is willing to pay
-    time_limit: bool # activate time limit liquidation
-    time_amount: uint256 # set amount of time
-    collateral_type: address # accepted collateral for loan
-    collateral_deposited: uint256 # collateral deposited by borrower
+    margin_cutoff: uint256 
+    collateral_ratio: uint256 
+    fixed_interest_rate: uint256 
+    borrow_amount: uint256 
+    time_limit: bool 
+    time_amount: uint256 
+    collateral_type: address 
+    collateral_deposited: uint256 
     principal_type: address
-    current_debt: uint256  # amount currently owed by the borrower
-    access_control: bool # public or private loan
-    state: bytes32 # state of the loan
+    current_debt: uint256 
+    access_control: bool 
+    state: bytes32 
     loan_type: uint256
 
 
