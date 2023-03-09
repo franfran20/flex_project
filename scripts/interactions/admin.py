@@ -1,4 +1,5 @@
 from ape import accounts, project, chain
+from web3 import Web3
 
 fantom_address = "0x0000000000000000000000000000000000000000"
 fantom_usd_price_feed = "0xe04676B9A9A2973BCb0D1478b5E1E9098BBB7f3D"
@@ -20,7 +21,11 @@ def add_token_support():
     usdt_token = chain.contracts.get_deployments(project.mockUsdt)[-1]
     usdt_token_address = usdt_token.address
 
+    flex_core.add_token_support(flex_token.address, sender=acct)
+
     flex_core.add_token_support(usdt_token_address, sender=acct)
+
+    flex_core.add_token_support(link_token, sender=acct)
 
     print(" Token Support Added")
 
@@ -40,18 +45,30 @@ def add_price_feed():
 
     print("Adding Asset pRiCE fEED...")
     flex_core.add_price_feed_address(
+        flex_token.address, flex_token_price_feed.address, sender=acct
+    )
+
+    print("Adding Asset pRiCE fEED...")
+    flex_core.add_price_feed_address(
         usdt_token_address, usdt_usd_price_feed, sender=acct
     )
+
+    print("Adding Asset pRiCE fEED...")
+    flex_core.add_price_feed_address(link_token, link_usd_price_feed, sender=acct)
+
+    print("Adding Asset pRiCE fEED...")
+    flex_core.add_price_feed_address(fantom_address, fantom_usd_price_feed, sender=acct)
 
     print("asset Price Feed Added")
 
 
 def manipulate_flex_token_price():
+    acct = accounts.load("test1")
     flex_token_price_feed = chain.contracts.get_deployments(project.MockV3Aggregator)[
         -1
     ]
     print("Manipulating Flex Usd Price From ")
-
+    flex_token_price_feed.updateAnswer(int(1.2 * 10**8), sender=acct)
     # not done intergrating
 
 

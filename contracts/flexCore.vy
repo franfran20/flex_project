@@ -39,6 +39,8 @@ owner: public(address)
 # flex calc
 flex_calc: public(address)
 
+# chat counter
+chat_count: public(uint256 )
 # loan id counter
 loan_counter: public(uint256)
 # Loan types
@@ -51,7 +53,6 @@ LIQUIDATION_FEE: constant(uint256) = 2
 proposed: public(bytes32)
 accepted: public(bytes32)
 fulfilled: public(bytes32)
-deactivated: public(bytes32)
 # loan proposal types
 borrower_proposal: public(bytes32)
 lender_proposal: public(bytes32)
@@ -113,6 +114,7 @@ event ChatPushed:
     renegotiaited_loan_id: bytes32
     messageURI: String[500]
     lender_or_borrower: uint256 # 0 -lender and 1 for borrower
+    chat_id: uint256
 
 event LoanReNegotiationAccepted:
     loan_id: uint256
@@ -124,11 +126,13 @@ event ProposalPushed:
     loan_id: uint256
     proposer_type: bytes32
     proposal_details: Loan
+    existence: bool
 
 event ProposalAccepted:
     loan_id: uint256
     proposal_accepted: bytes32
     proposal_details: Loan
+    existence: bool
 
 event LoanRepaid:
     loan_id: uint256
@@ -142,20 +146,20 @@ event BuyoutProposed:
     loan_id: uint256
     buyer: address
     buyout_amount: uint256
+    existence: bool
 
 event BuyOutCanceled:
     loan_id: uint256
     buyer: address
     buyout_amount: uint256
+    existence: bool
 
-event LoanDeactivated:
-    loan_id: uint256
-    loan_Details: Loan
 
 event LoanBought:
     loan_id: uint256
     buyer: address
     buyout_amount: uint256
+    existence: bool
 
 event CollateralTopUp:
     loan_id: uint256
@@ -168,7 +172,6 @@ def __init__(_flex_calc: address):
     self.proposed = keccak256("PROPOSED")
     self.accepted =  keccak256("ACCEPTED")
     self.fulfilled = keccak256("FULFILLED")
-    self.deactivated = keccak256("DEACTIVATED")
 
     # LOAN TYPES
     self.lender_loan = 0
@@ -280,15 +283,20 @@ def renegotiate(_loan_id: uint256, _user_custom_id: String[30], _margin_cutoff: 
     if selected_loan.time_limit:
         _new_time_amount = _time_amount
 
+
     actual_lender: address = empty(address)
     actual_borrower: address = empty(address)
 
     if selected_loan.loan_type == self.lender_loan:
         actual_lender = selected_loan.lender
         actual_borrower = msg.sender
+        if msg.sender == selected_loan.lender:
+            raise "! Renegotiate Your Loan"
     if selected_loan.loan_type == self.borrower_loan:
         actual_lender = msg.sender
         actual_borrower = selected_loan.borrower
+        if msg.sender == selected_loan.borrower:
+            raise "! Renegotiate Your Loan"
 
     renegotiaited_loan: Loan = Loan({
         borrower: actual_borrower, 
@@ -416,7 +424,6 @@ def change_original_loan_terms(_loan_id: uint256, _margin_cutoff: uint256, _coll
 
 
 @external
-@payable 
 def accept_renegotiation(_loan_id: uint256, _user_custom_id: String[30]):
 
     self.check_loan_exist(_loan_id)
@@ -448,6 +455,9 @@ def push_renegotiation_chat(_loan_id: uint256, _user_custom_id: String[30], mess
     self.check_loan_exist(_loan_id)
     self.check_loan_state_is_proposed(selected_loan.state)
 
+    chat_counter: uint256 = self.chat_count + 1
+    self.chat_count = chat_counter
+
    
     _renegotiaited_loan_id: bytes32 = keccak256(_user_custom_id)
     if self.loan_renegotiation_id_tracker[_loan_id][_renegotiaited_loan_id] == empty(address): 
@@ -462,10 +472,10 @@ def push_renegotiation_chat(_loan_id: uint256, _user_custom_id: String[30], mess
         raise "No Chat Permission"
     
     if msg.sender == lender:
-        log ChatPushed(_loan_id, _user_custom_id, _renegotiaited_loan_id, message, 0)
+        log ChatPushed(_loan_id, _user_custom_id, _renegotiaited_loan_id, message, 0, self.chat_count)
 
     if msg.sender == borrower:
-        log ChatPushed(_loan_id, _user_custom_id, _renegotiaited_loan_id, message, 1)
+        log ChatPushed(_loan_id, _user_custom_id, _renegotiaited_loan_id, message, 1, self.chat_count)
   
 
 @external 
@@ -556,7 +566,7 @@ def accept_loan_terms(_loan_id: uint256, _erc20Amount: uint256):
     if selected_loan.time_limit:
         self.loan_timers[_loan_id] = block.timestamp + selected_loan.time_amount
     
-    log LoanAccepted(_loan_id, selected_loan)
+    log LoanAccepted(_loan_id, self.loan_details[_loan_id])
    
 
 @external 
@@ -603,7 +613,7 @@ def propose_new_terms_after_acceptance(_loan_id: uint256,  _margin_cutoff: uint2
     
     self.loan_proposals[_loan_id][proposer] = new_loan_proposal
     self.loan_proposal_tracker[_loan_id][proposer] = True
-    log ProposalPushed(_loan_id, proposer, new_loan_proposal)
+    log ProposalPushed(_loan_id, proposer, new_loan_proposal, True)
 
 
 @external
@@ -636,7 +646,7 @@ def accept_new_proposal(_loan_id: uint256):
     if selected_proposal.time_limit:
         self.loan_timers[_loan_id] = block.timestamp + selected_proposal.time_amount
 
-    log ProposalAccepted(_loan_id, proposal, selected_proposal)
+    log ProposalAccepted(_loan_id, proposal, selected_proposal, False)
 
 @external
 @payable 
@@ -669,8 +679,13 @@ def repay_loan(_loan_id: uint256):
 
     self.loan_details[_loan_id].state = self.fulfilled
     self.loan_details[_loan_id].current_debt = 0
+    self.loan_details[_loan_id].borrow_amount = 0
+    self.loan_details[_loan_id].collateral_deposited = 0
 
-    log LoanRepaid(_loan_id, selected_loan)
+    self.loan_timers[_loan_id] = 0
+
+
+    log LoanRepaid(_loan_id, self.loan_details[_loan_id])
  
 
 @external 
@@ -701,9 +716,13 @@ def liquidate_loan(_loan_id: uint256):
                     ERC20(selected_loan.collateral_type).transfer(selected_loan.lender, amount_given_to_lender)
                     ERC20(selected_loan.collateral_type).transfer(msg.sender, amount_given_to_liquidator)
 
+                
                 self.loan_details[_loan_id].state = self.fulfilled
                 self.loan_details[_loan_id].current_debt = 0
+                self.loan_details[_loan_id].borrow_amount = 0
                 self.loan_details[_loan_id].collateral_deposited = 0
+
+                self.loan_timers[_loan_id] = 0
 
                 log LoanLiquidated(_loan_id, self.loan_details[_loan_id])
         else:
@@ -727,10 +746,12 @@ def liquidate_loan(_loan_id: uint256):
                 ERC20(selected_loan.collateral_type).transfer(selected_loan.lender, amount_given_to_lender)
                 ERC20(selected_loan.collateral_type).transfer(msg.sender, amount_given_to_liquidator)
 
-           
             self.loan_details[_loan_id].state = self.fulfilled
             self.loan_details[_loan_id].current_debt = 0
+            self.loan_details[_loan_id].borrow_amount = 0
             self.loan_details[_loan_id].collateral_deposited = 0
+
+            self.loan_timers[_loan_id] = 0
 
             log LoanLiquidated(_loan_id, self.loan_details[_loan_id])
         else:
@@ -761,7 +782,7 @@ def propose_loan_buyout(_loan_id: uint256, _buyout_amount: uint256):
 
     self.loan_buyouts[_loan_id][msg.sender] = _buyout_amount
 
-    log BuyoutProposed(_loan_id, msg.sender, _buyout_amount)
+    log BuyoutProposed(_loan_id, msg.sender, _buyout_amount, True)
 
 
 @external 
@@ -782,7 +803,7 @@ def cancel_loan_buyout(_loan_id: uint256):
     
     self.loan_buyouts[_loan_id][msg.sender] = 0
 
-    log BuyOutCanceled(_loan_id, msg.sender, deposited_amount)
+    log BuyOutCanceled(_loan_id, msg.sender, deposited_amount, False)
 
 
 @external 
@@ -808,45 +829,9 @@ def accept_loan_buyout(_loan_id: uint256, _buyer: address):
 
     self.loan_details[_loan_id].lender = _buyer
     
-    log LoanBought(_loan_id, _buyer, buyout_amount)
-
-@external # 
-def deactivate_loan(_loan_id: uint256):
-    
-    self.check_loan_exist(_loan_id)
-    selected_loan: Loan = self.loan_details[_loan_id]
+    log LoanBought(_loan_id, _buyer, buyout_amount, False)
 
 
-    self.check_loan_state_is_proposed(selected_loan.state)
-
-    loan_type: uint256 =  selected_loan.loan_type
-    creator: address = empty(address)
-
-    if loan_type == self.lender_loan:
-        if msg.sender != selected_loan.lender:
-            raise "No Permision To Deactivate"
-   
-        if selected_loan.principal_type == empty(address):
-            raw_call(selected_loan.lender, b"", value=selected_loan.borrow_amount)
-        else: 
-            ERC20(selected_loan.principal_type).transfer(selected_loan.lender, selected_loan.borrow_amount)
-
-        self.loan_details[_loan_id].state = self.deactivated
-   
-        log LoanDeactivated(_loan_id, self.loan_details[_loan_id])
-
-    if loan_type == self.borrower_loan:
-        if msg.sender != selected_loan.borrower:
-            raise "No Permision To Deactivate"
-
-        if selected_loan.collateral_type == empty(address):
-            raw_call(selected_loan.borrower, b"", value=selected_loan.collateral_deposited)
-        else:
-            ERC20(selected_loan.collateral_type).transfer(selected_loan.borrower, selected_loan.collateral_deposited)
-
-        self.loan_details[_loan_id].state = self.deactivated
-
-        log LoanDeactivated(_loan_id, self.loan_details[_loan_id])
 
 @external
 @payable
@@ -1096,8 +1081,7 @@ def get_health_status(loan_id: uint256) -> uint256:
     margin_cutoff_in_usd, deposited_collateral_in_usd, over_collateralized_collateral_in_usd = self.get_margin_cutoff_in_usd(selected_loan)
 
     health_status: uint256 = 0 # 1 - safe # 2 - inbetween #3 - unsafe and can be liquidated
-
-
+    
     if deposited_collateral_in_usd > over_collateralized_collateral_in_usd:
         health_status = 1    
     if deposited_collateral_in_usd < margin_cutoff_in_usd:
@@ -1105,4 +1089,18 @@ def get_health_status(loan_id: uint256) -> uint256:
     if deposited_collateral_in_usd > margin_cutoff_in_usd and deposited_collateral_in_usd < over_collateralized_collateral_in_usd:
         health_status = 2
 
+    if selected_loan.time_limit:
+        if block.timestamp > self.loan_timers[loan_id]:
+            health_status = 2
+
     return health_status
+
+@external
+@view
+def get_block_time_stamp() -> uint256:
+    return block.timestamp
+
+@external
+@payable
+def __default__():
+    assert msg.value > 1

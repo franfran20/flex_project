@@ -21,5 +21,44 @@ def get_price():
     print("Flex Price: ", flex_price[1] / 10**8)
 
 
+def get_loan_states():
+    flex_core = chain.contracts.get_deployments(project.flexCore)[-1]
+
+    print("Proposed State", flex_core.proposed().hex())
+    print("Accepted State", flex_core.accepted().hex())
+    print("Fulfilled State", flex_core.fulfilled().hex())
+    print("Deactivated State", flex_core.deactivated().hex())
+
+
+def get_proposals():
+    flex_core = chain.contracts.get_deployments(project.flexCore)[-1]
+
+    print("lender proposal: ", flex_core.lender_proposal().hex())
+    print("borrower proposal: ", flex_core.borrower_proposal().hex())
+
+
+def get_loan_details_by_id():
+    flex_core = chain.contracts.get_deployments(project.flexCore)[-1]
+
+    print("Loan Details: ", flex_core.get_loan_Details_by_id(9))
+
+
+def get_renegotiated_loan_by_its_id():
+    flex_core = chain.contracts.get_deployments(project.flexCore)[-1]
+
+    print("Loan Details: ", flex_core.get_renegotiated_loan_by_its_id(8, "Chris"))
+
+
+def calulate_require_loan_principal_or_collateral_for_renegotiation_acceptance():
+    flex_core = chain.contracts.get_deployments(project.flexCore)[-1]
+
+    print(
+        "Loan Details: ",
+        flex_core.calulate_require_loan_principal_or_collateral_for_renegotiation_acceptance(
+            8, "Chris"
+        ),
+    )
+
+
 def main():
-    get_price()
+    get_loan_details_by_id()
