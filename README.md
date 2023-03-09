@@ -144,10 +144,11 @@ Next JS along with the graph and react moralis were used to build out the fronte
 
 ## **Links**
 
-- [Smart Contract Repository]()
-- [Frontend Repository]()
-- [Flex And Usdt Faucet]()
+- [Smart Contract Repository](https://github.com/franfran20/flex_project)
+- [Frontend Repository](https://github.com/franfran20/flex_client)
+- [Flex And Usdt Faucet](https://flex-client-rhih.vercel.app/faucet)
 - [Video Submission Link]()
+- [Live Site](https://flex-client-rhih.vercel.app/)
 - Flex Token Address : `0x476cFd8523e767eA40Eb094AAc07D9A2e5F17Ef1`
 - Mock Usdt Address : `0xE14B4e52d15a3704502096b5aF28D4e2cd83Fb70`
 - Flex Core Address: `0x107269369cdE7f73A9E21707003176ebC9fF7290`

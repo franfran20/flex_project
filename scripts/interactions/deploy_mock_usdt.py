@@ -1,4 +1,4 @@
-from ape import project, accounts
+from ape import project, accounts, chain
 
 
 def deploy_mock_usdt():
@@ -10,5 +10,11 @@ def deploy_mock_usdt():
     print("deployed")
 
 
+def mint_usdt():
+    flex_core = chain.contracts.get_deployments(project.flexCore)[-1]
+
+    print("Flex Core", flex_core.address)
+
+
 def main():
-    deploy_mock_usdt()
+    mint_usdt()
